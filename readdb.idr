@@ -18,17 +18,19 @@ readFile = readAcc [] where
                                 readAcc (str :: acc)
                         else return (reverse acc)
 
-dumpFile : String -> FileIO () ()
+dumpFile : String -> FileIO String ()
 dumpFile fname = do ok <- open fname Read
                     toEff [FILE_IO _, _, _] $ 
                      case ok of
                        True => do num <- get
-                                  putStrLn (show !get ++ "\n" ++
+                                  let db = (show !get ++ "\n" ++
                                             show !readFile)
                                   close
-                       False => putStrLn ("Error!")
-                    putStrLn "DONE!"
+                                  
+                       False => putStrLn ("Error loading database!")
                     return ()
+
+
 
 main : IO ()
 main = run $ dumpFile "studentdb.tsv"
