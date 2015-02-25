@@ -8,8 +8,8 @@ FileIO : Type -> Type -> Type
 FileIO st t
   = { [FILE_IO st, STDIO, STATE Int] } Eff t 
 
-readFile : FileIO (OpenFile Read) (List String)
-readFile = readAcc [] where
+readFile' : FileIO (OpenFile Read) (List String)
+readFile' = readAcc [] where
     readAcc : List String -> FileIO (OpenFile Read) (List String)
     readAcc acc = do e <- eof
                      if (not e)
@@ -18,19 +18,22 @@ readFile = readAcc [] where
                                 readAcc (str :: acc)
                         else return (reverse acc)
 
-dumpFile : String -> FileIO String ()
-dumpFile fname = do ok <- open fname Read
-                    toEff [FILE_IO _, _, _] $ 
-                     case ok of
-                       True => do num <- get
-                                  let db = (show !get ++ "\n" ++
-                                            show !readFile)
+loadFile : String -> FileIO () (List String)
+loadFile fname = do ok <- open fname Read
+                    toEff [FILE_IO _, _, _] $
+                      case ok of
+                       True => do lst <- readFile'
+                                  putStrLn (show lst)
+                                  --close
+                                  return (lst)
                                   close
-                                  
-                       False => putStrLn ("Error loading database!")
-                    return ()
-
-
+                       False => putStrLn ("Error Loading Database")
+                    putStrLn ("No Database Loaded")
+                    return []
 
 main : IO ()
-main = run $ dumpFile "studentdb.tsv"
+--main = run $ dumpFile "studentdb.tsv"
+main = do stuff <- run $ loadFile "studentdb.tsv"
+          putStrLn (show stuff)
+          --putStrLn (index 0 stuff)
+          return ()
