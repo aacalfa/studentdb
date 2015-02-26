@@ -24,16 +24,15 @@ loadFile fname = do ok <- open fname Read
                       case ok of
                        True => do lst <- readFile'
                                   putStrLn (show lst)
-                                  --close
-                                  return (lst)
                                   close
-                       False => putStrLn ("Error Loading Database")
-                    putStrLn ("No Database Loaded")
-                    return []
+                                  return (lst)
+                       False => do
+                         putStrLn ("Error Loading Database")
+                         return []
+                       
 
 main : IO ()
 --main = run $ dumpFile "studentdb.tsv"
 main = do stuff <- run $ loadFile "studentdb.tsv"
           putStrLn (show stuff)
-          --putStrLn (index 0 stuff)
           return ()
