@@ -1,31 +1,58 @@
 record Student : Type where
   MkStudent : (name : String) ->
-             (perm : Nat) -> Student
+             (perm : Int) -> Student
+
+data AssignmentFormat = Discussion | Implementation | Writeup
+
+data SubjectArea = SubTypes | ILP | LLP | DepTypes | LP 
+
+data Assignment : SubjectArea -> AssignmentFormat -> Type where
+   MkAssignment : (sa : SubjectArea) -> (f : AssignmentFormat) -> Assignment sa f
+
+record StudentAssignment : Type where
+  MkStudentAssignment : (std : Student) -> 
+                      (assignment1 : Maybe (Assignment sa1 f1)) -> 
+                      (assignment2 : Maybe (Assignment sa2 f2)) ->
+                      StudentAssignment
 
 
-data AssignmentFormat : Type where
-  Discussion     : AssignmentFormat
-  Implementation : AssignmentFormat
-  Writeup        : AssignmentFormat
+---------------
+--------------- Parsers
 
-data SubjectArea : Type where
-   SubTypes : SubjectArea
-   ILP : SubjectArea
-   LLP : SubjectArea
-   DepTypes : SubjectArea
-   LP : SubjectArea
+ParseStudent : String -> String -> Maybe Student
+ParseStudent name permStr = let perm = cast permStr in
+                              case perm of
+                                 0 => Nothing
+                                 _ => Just (MkStudent name perm) 
 
-data Assignment : AssignmentFormat -> SubjectArea -> Type where
-   MkAssignment : (f : AssignmentFormat) -> (sa : SubjectArea) -> Assignment f sa
+ParseAssignmentFormat : String -> Maybe AssignmentFormat
+ParseAssignmentFormat str = case str of
+                              "I" => Just Implementation
+                              "W" => Just Writeup
+                              "D" => Just Discussion
+                              _ => Nothing
 
-data Vect : Nat -> Type -> Type where
-  Nil : Vect Z a
-  (::) : a -> Vect k a -> Vect (S k) a 
+ParseSubjectArea : String -> Maybe SubjectArea
+ParseSubjectArea str =  case str of
+                          "subT" => Just SubTypes
+                          "depT" => Just DepTypes
+                          "llp" => Just LLP
+                          "ilp" => Just ILP
+                          "lp" => Just LP
+                          _ => Nothing
 
-record Class : Type where
-  ClassInfo : (students : Vect n Student) ->
-              (assignments : Vect m (Assignment f sa)) ->
-              (className : String) ->
-              Class
+ParseAssignment : String -> Maybe (Assignment sa f)
+ParseAssignment str = let tokens = split (== '-') str in
+                         let subj = !(ParseSubjectArea (index 0 tokens)) in
+                            let fmt = !(ParseAssignmentFormat (index 1 tokens)) in
+                               Just (MkAssignment subj fmt) 
+
+                 
+{-
+                 Just (MkAssignment !(ParseSubjectArea (index 0 x)) !(ParseAssignmentFormat (index 1 x)))
 
 
+ParseStudentAssignment : String -> Maybe StudentAssignment
+ParseStudentAssignment str = let x = split (== '\t') str in
+                            StudentAssignment !(ParseStudent (index 0 x) (index 1 x)) (ParseAssignent (index 2 x)) (ParseAssignment (index 3 x))
+-}
