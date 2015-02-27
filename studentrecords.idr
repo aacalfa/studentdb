@@ -24,6 +24,37 @@ record StudentAssignment : Type where
                       (assignment2 : Maybe (Assignment)) ->
                       StudentAssignment
 
+-----------------------------
+--- String representation ---
+-----------------------------
+
+instance Show AssignmentFormat where
+   show Discussion = "D"
+   show Implementation = "I"
+   show Writeup = "W"
+
+instance Show SubjectArea where
+   show ILP = "ilp"
+   show LLP = "llp"
+   show LP = "lp"
+   show DepTypes = "depT"
+   show SubTypes = "subT"
+
+
+instance Show Assignment where
+   show assgn = (show (sa assgn)) ++ "-" ++ (show (fmt assgn))
+
+instance Show Student where
+   show std = (name std) ++ "," ++ (show (perm std))
+
+AssignmentToStr : Maybe Assignment -> String
+AssignmentToStr massgn = case massgn of
+                            Just sassgn => show sassgn
+                            Nothing => ""
+
+instance Show StudentAssignment where
+   show sassgn = (show (student sassgn)) ++ "\t" ++ (AssignmentToStr (assignment1 sassgn)) ++ "\t" ++ (AssignmentToStr (assignment2 sassgn)) 
+
 -----------------------------------------
 --------------- Parsers -----------------
 -----------------------------------------
@@ -67,7 +98,7 @@ ParseAssignment str = let tokens = split (== '-') str in
 -- Returns the corresponding the StudentAssignment or Nothing
 ParseStudentAssignment : String -> Maybe StudentAssignment
 ParseStudentAssignment str = let x = split (== '\t') str in
-                            Just (MkStudentAssignment !(ParseStudent !(index' 0 x) !(index' 1 x)) (ParseAssignment !(index' 2 x)) (ParseAssignment !(index' 3 x)))
+                            Just (MkStudentAssignment !(ParseStudent !(index' 0 x) !(index' 1 x)) (ParseAssignment !(index' 2 x)) (ParseAssignment (trim !(index' 3 x))))
 
 -- Parses a list of strings that denotes all StudentAssignment records
 -- Returns the corresponding list or Nothing

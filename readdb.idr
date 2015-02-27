@@ -20,6 +20,12 @@ readFile' = readAcc [] where
                                 readAcc (str :: acc)
                         else return (reverse acc)
 
+-- Write to a file, line by line
+writeFile : List StudentAssignment -> FileIO (OpenFile Write) ()
+writeFile [] = do writeLine ""
+writeFile (x :: xs) = do writeLine (show x)
+                         writeFile xs
+
 -- Opens a file for read and returns its lines as a list of strings
 loadFile : String -> FileIO () (List String)
 loadFile fname = do ok <- open fname Read
@@ -48,16 +54,30 @@ getFailingStudents recs = filter isFailingStudent recs
 getPassingStudents : List StudentAssignment -> List StudentAssignment
 getPassingStudents recs = filter isPassingStudent recs
 
+saveFile : List StudentAssignment -> String -> FileIO () ()
+saveFile recs fname = do ok <- open fname Write
+                         toEff [FILE_IO _, _, _] $
+                           case ok of
+                              True => do ok <- writeFile recs
+                                         close
+                                         return ()
+                              False => do putStrLn ("Error Writing Database")
+                                          return ()
+
+
+dbfilename : String
+dbfilename = "studentdb.tsv"
 
 main : IO ()
-main = do dbstring <- run $ loadFile "studentdb.tsv"
+main = do dbstring <- run $ loadFile dbfilename
           let records = ParseRecords dbstring
           putStrLn ("Loaded " ++ (show (length records)) ++ " Records")
           putStrLn ("Passing Students")
           let passing = getPassingStudents records
           putStrLn (show (studentrecords.GetNames passing)) 
+          run $ saveFile passing (dbfilename ++ ".passing")
           putStrLn ("Failing students")
           let failing = getFailingStudents records
+          run $ saveFile failing (dbfilename ++ ".failing")
           putStrLn (show (studentrecords.GetNames failing)) 
-          
           return ()
