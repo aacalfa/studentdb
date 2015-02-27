@@ -6,13 +6,13 @@ data AssignmentFormat = Discussion | Implementation | Writeup
 
 data SubjectArea = SubTypes | ILP | LLP | DepTypes | LP 
 
-data Assignment : SubjectArea -> AssignmentFormat -> Type where
-   MkAssignment : (sa : SubjectArea) -> (f : AssignmentFormat) -> Assignment sa f
+record Assignment : Type where
+   MkAssignment : (sa : SubjectArea) -> (fmt : AssignmentFormat) -> Assignment
 
 record StudentAssignment : Type where
   MkStudentAssignment : (std : Student) -> 
-                      (assignment1 : Maybe (Assignment sa1 f1)) -> 
-                      (assignment2 : Maybe (Assignment sa2 f2)) ->
+                      (assignment1 : Maybe (Assignment)) -> 
+                      (assignment2 : Maybe (Assignment)) ->
                       StudentAssignment
 
 
@@ -41,18 +41,11 @@ ParseSubjectArea str =  case str of
                           "lp" => Just LP
                           _ => Nothing
 
-ParseAssignment : String -> Maybe (Assignment sa f)
+ParseAssignment : String -> Maybe (Assignment)
 ParseAssignment str = let tokens = split (== '-') str in
-                         let subj = !(ParseSubjectArea (index 0 tokens)) in
-                            let fmt = !(ParseAssignmentFormat (index 1 tokens)) in
-                               Just (MkAssignment subj fmt) 
+                         Just (MkAssignment !(ParseSubjectArea !(index' 0 tokens)) !(ParseAssignmentFormat !(index' 1 tokens)))
 
                  
-{-
-                 Just (MkAssignment !(ParseSubjectArea (index 0 x)) !(ParseAssignmentFormat (index 1 x)))
-
-
 ParseStudentAssignment : String -> Maybe StudentAssignment
 ParseStudentAssignment str = let x = split (== '\t') str in
-                            StudentAssignment !(ParseStudent (index 0 x) (index 1 x)) (ParseAssignent (index 2 x)) (ParseAssignment (index 3 x))
--}
+                            Just (MkStudentAssignment !(ParseStudent !(index' 0 x) !(index' 1 x)) (ParseAssignment !(index' 2 x)) (ParseAssignment !(index' 3 x)))
