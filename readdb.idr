@@ -37,6 +37,16 @@ loadFile fname = do ok <- open fname Read
                        False => do putStrLn ("Error Loading Database")
                                    return []
 
+-- Saves a list of StudentAssignment records into a file.
+saveFile : List StudentAssignment -> String -> FileIO () ()
+saveFile recs fname = do ok <- open fname Write
+                         toEff [FILE_IO _, _, _] $
+                           case ok of
+                              True => do ok <- writeFile recs
+                                         close
+                                         return ()
+                              False => do putStrLn ("Error Writing Database")
+                                          return ()
 
 -- Returns whether a student is a failing student or not
 isFailingStudent : StudentAssignment -> Bool
@@ -54,15 +64,6 @@ getFailingStudents recs = filter isFailingStudent recs
 getPassingStudents : List StudentAssignment -> List StudentAssignment
 getPassingStudents recs = filter isPassingStudent recs
 
-saveFile : List StudentAssignment -> String -> FileIO () ()
-saveFile recs fname = do ok <- open fname Write
-                         toEff [FILE_IO _, _, _] $
-                           case ok of
-                              True => do ok <- writeFile recs
-                                         close
-                                         return ()
-                              False => do putStrLn ("Error Writing Database")
-                                          return ()
 
 
 dbfilename : String
