@@ -35,4 +35,6 @@ case, printing to the screen, and return the type ().
 This is also the return type of the "putStrLn" function (the "print"-equivalent"
 in Idris)
 
- 
+Using Effects such as IO in a larger program allows us to isolate the behavior
+of side-effecting code from normally-typechecked code.
+In wget.lidr, we will explore such an example
