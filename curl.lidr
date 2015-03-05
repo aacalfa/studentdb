@@ -17,7 +17,7 @@ when a call to recv returns no data.
 >                      Right (content,len) => case len of
 >                                             0 => return ("")
 >                                             _ => return (content ++ !(recvAll sock))
->                     Left _ => return ("")
+>                      Left _ => return ("")
 
 
 Here is the stuff we want to connect to.  Command line argument parsing is 
