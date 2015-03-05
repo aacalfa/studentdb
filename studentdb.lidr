@@ -4,12 +4,33 @@
 > import Effect.StdIO
 > import Control.IOExcept
 > import studentrecords
-> 
+
+Here is a more complex example using Effects -- Effectful File IO.
+Idris has a set of functions for dealing with files based on the "IO" effect.
+However, these make you pass file handles around. That's boring.
+Let's spice things up a bit
+
+Idris provides a "FileIO" Effect in the Effects.File module.  Here's what the
+user-facing part looks like:
+ 
 > FileIO : Type -> Type -> Type
 > FileIO st t
 >   = { [FILE_IO st, STDIO, STATE Int] } Eff t 
- 
-Reads a file line by line and returns them as a list of strings
+
+This is an effect that depends on a few other effects, namely:
+ - FILE_IO: A lower-level effect, which holds the "mode" of the file as its
+            own state.  
+ - STDIO: The effect containing stuff needed to read and write StdIO
+ - STATE Int: The STATE effect lets you store mutable state.  In this case,
+              we hang on to one integer, the file descriptor itself
+Here, t, the last parameter, is the return type of the IO actions, as before.
+
+
+This reads a file line by line and returns them as a list of strings
+Note that, obviously, the file has to be open, and open for reading, first.  Our type signature here
+enforces this, by using the FILE_IO effect's state (as described above)
+Note that here we define readFile', in contrast to "readFile" that Idris
+provides, as reading the file to a list of lines, instead of one big string.
 
 > readFile' : FileIO (OpenFile Read) (List String)
 > readFile' = readAcc [] where
@@ -21,14 +42,22 @@ Reads a file line by line and returns them as a list of strings
 >                                 readAcc (str :: acc)
 >                         else return (reverse acc)
  
-Write to a file, line by line
+Similar to the above, this provides the ability to write out one of our
+data files.  Given a list of StudentAssignment objects (see records.lidr)
+write out the database.
+Obviously the file has to be open for writing first.  We return (), since
+nothing is returned from writeLine, short of failing outright and crashing.
 
 > writeFile : List StudentAssignment -> FileIO (OpenFile Write) ()
 > writeFile [] = do writeLine ""
 > writeFile (x :: xs) = do writeLine (show x)
 >                          writeFile xs
  
-Opens a file for read and returns its lines as a list of strings
+This loads a studentdb file (such as studentdb.tsv included)
+
+This function contains both the opening, and closing, of the file, so the 
+end result at the end is that no file is open.  We indicate this by using ()
+for the state.  The actual result here is a list of strings.
 
 > loadFile : String -> FileIO () (List String)
 > loadFile fname = do ok <- open fname Read
@@ -39,8 +68,8 @@ Opens a file for read and returns its lines as a list of strings
 >                                   return (lst)
 >                        False => do putStrLn ("Error Loading Database")
 >                                    return []
- 
-Saves a list of StudentAssignment records into a file.
+
+SImilarly to the above, this writes a whole file of StudentAssignment records.
 
 > saveFile : List StudentAssignment -> String -> FileIO () ()
 > saveFile recs fname = do ok <- open fname Write
@@ -51,8 +80,18 @@ Saves a list of StudentAssignment records into a file.
 >                                          return ()
 >                               False => do putStrLn ("Error Writing Database")
 >                                           return ()
- 
-Returns whether a student is a failing student or not
+
+Note that the toEff line explicitly declares which effect we want to work
+under.  Here, it's any FILE_IO effect,  
+
+Wait a second, where are all the file handles? How does it know what file
+we are working with???
+Confusingly, in sharp contrast to this kind of language's super-explicit
+nature, there's a ton of inferred parameters being passed around, including
+the file's handle itself.  
+
+Now for some actual program logic.
+This returns whether a student is a failing student or not
 
 > isFailingStudent : StudentAssignment -> Bool
 > isFailingStudent rec = (isNothing (assignment1 rec)) || (isNothing (assignment2 rec))
@@ -73,10 +112,22 @@ Returns a list of all students who are currently passing the class
 > getPassingStudents recs = filter isPassingStudent recs
  
  
+Command-line parsing is still broken.  Hard-code the DB name here.
  
 > dbfilename : String
 > dbfilename = "studentdb.tsv"
  
+
+Given all of the above, this program does the following:
+- Load a database (tab-separated) of students, their (fake) ID numbers, and
+  their two class assignments
+- Determine whether all of these students "pass" (did two assignments)
+- Write out files containing the lists of passing and failing students.
+
+"run" lets you run parts of program in a different Effect context.
+Our main is IO (), and our functions are FileIO () (), so this is required.
+This provides a sort of compartmentalization to your program.
+
 > main : IO ()
 > main = do dbstring <- run $ loadFile dbfilename
 >           let records = ParseRecords dbstring
