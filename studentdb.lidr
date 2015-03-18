@@ -17,6 +17,9 @@ user-facing part looks like:
 > FileIO st t
 >   = { [FILE_IO st, STDIO, STATE Int] } Eff t 
 
+This is the standard format for an effect in Idris.  In the {} are the effects
+(usually in all-caps) that are being used. 
+
 This is an effect that depends on a few other effects, namely:
  - FILE_IO: A lower-level effect, which holds the "mode" of the file as its
             own state.  
@@ -24,7 +27,7 @@ This is an effect that depends on a few other effects, namely:
  - STATE Int: The STATE effect lets you store mutable state.  In this case,
               we hang on to one integer, the file descriptor itself
 Here, t, the last parameter, is the return type of the IO actions, as before.
-
+We can assign this to a type, as is done here (FileIO) to avoid all that ugly syntax
 
 This reads a file line by line and returns them as a list of strings
 Note that, obviously, the file has to be open, and open for reading, first.  Our type signature here
